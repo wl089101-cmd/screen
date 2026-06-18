@@ -3,67 +3,201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>QuantumLink // Remote Agent Installed</title>
+    <title>QuantumLink // Remote Screen Replicator</title>
     <style>
-        body { background-color: #060709; color: #00ff66; font-family: -apple-system, BlinkMacSystemFont, 'Courier New', sans-serif; margin: 0; padding: 15px; box-sizing: border-box; height: 100vh; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
-        .header-panel { background: #0f111a; border: 1px solid #ff3366; border-radius: 8px; padding: 12px; font-size: 0.85em; box-shadow: 0 0 10px rgba(255, 51, 102, 0.15); }
-        .alert-tag { color: #ff3366; font-weight: bold; animation: pulse 1s infinite alternate; }
-        @keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
-        .video-sandbox { position: relative; width: 100%; height: 45vh; background: #000; border: 2px solid #00ff66; border-radius: 8px; overflow: hidden; margin: 15px 0; box-shadow: inset 0 0 20px rgba(0, 255, 102, 0.5); }
-        .noise-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px), repeating-linear-gradient(90deg, rgba(0,255,102,0.1), rgba(0,255,102,0.1) 1px, transparent 1px, transparent 2px); animation: static-noise 0.2s infinite; opacity: 0.7; }
-        .scanline { position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: rgba(0, 255, 102, 0.6); box-shadow: 0 0 10px #00ff66; animation: scan 2.5s linear infinite; }
-        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
-        @keyframes static-noise { 0% { transform: translate(0,0); } 100% { transform: translate(-1%, -1%); } }
-        .screen-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 90%; z-index: 10; background: rgba(0,0,0,0.7); padding: 15px 5px; border: 1px dashed #00ff66; border-radius: 4px; }
-        .glitch-title { font-size: 1.1em; font-weight: bold; color: #ffcc00; letter-spacing: 1px; margin-bottom: 5px; }
-        .console-logs { background: #000; border-radius: 6px; padding: 10px; font-family: monospace; font-size: 0.75em; color: #888; height: 130px; overflow-y: auto; border: 1px solid #1a1a24; }
-        .log-line { margin-bottom: 3px; }
-        .err { color: #ff3366; }
-        .warn { color: #ffcc00; }
-        .succ { color: #00ffff; }
+        body {
+            background-color: #060709;
+            color: #00ff66;
+            font-family: -apple-system, BlinkMacSystemFont, 'Courier New', sans-serif;
+            margin: 0;
+            padding: 15px;
+            box-sizing: border-box;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        .header-panel {
+            background: #0f111a;
+            border: 1px solid #00ff66;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 0.85em;
+            box-shadow: 0 0 10px rgba(0, 255, 102, 0.15);
+            text-align: center;
+        }
+
+        .title-large {
+            font-size: 1.6em;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #00ff66;
+            text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
+            margin: 5px 0;
+            text-transform: uppercase;
+        }
+
+        /* 核心区域：居中的投屏外壳 */
+        .video-sandbox {
+            position: relative;
+            width: 240px;
+            height: 440px;
+            background: #000;
+            border: 4px solid #a1a1aa;
+            border-radius: 36px;
+            overflow: hidden;
+            margin: 20px auto;
+            box-shadow: 0 0 25px rgba(0, 255, 102, 0.3), inset 0 0 20px rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 刘海屏效果 */
+        .notch {
+            position: absolute;
+            top: 0;
+            width: 120px;
+            height: 18px;
+            background: #a1a1aa;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            z-index: 100;
+        }
+
+        /* 纯 CSS 伪造黑客雪花点矩阵 */
+        .noise-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.2), rgba(0,0,0,0.2) 1px, transparent 1px, transparent 2px),
+                        repeating-linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.15) 1px, transparent 1px, transparent 2px);
+            animation: static-noise 0.15s infinite;
+            opacity: 0.85;
+        }
+
+        /* 内部小手机虚线框 */
+        .inner-phone-box {
+            position: absolute;
+            width: 80px;
+            height: 140px;
+            border: 2px dashed rgba(0, 255, 102, 0.7);
+            border-radius: 12px;
+            z-index: 5;
+        }
+
+        /* 扫描线效果 */
+        .scanline {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 6px;
+            background: rgba(0, 255, 255, 0.8);
+            box-shadow: 0 0 12px #00ffff;
+            animation: scan 2s linear infinite;
+            z-index: 10;
+        }
+
+        @keyframes scan {
+            0% { top: 0%; }
+            100% { top: 100%; }
+        }
+
+        @keyframes static-noise {
+            0% { transform: translate(0,0); }
+            50% { transform: translate(-1%, 1%); }
+            100% { transform: translate(1%, -1%); }
+        }
+
+        /* 大字浮层 */
+        .screen-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            z-index: 50;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+        }
+
+        .main-status-title {
+            font-size: 1.8em;
+            font-weight: 900;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .sub-status-title {
+            font-size: 1.0em;
+            font-weight: bold;
+            color: #ffffff;
+            letter-spacing: 1px;
+        }
+
+        .console-logs {
+            background: #000;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 0.75em;
+            color: #888;
+            height: 140px;
+            overflow-y: auto;
+            border: 1px solid #1e293b;
+        }
+
+        .log-line { margin-bottom: 4px; line-height: 1.3; }
+        .err { color: #ff3366; font-weight: bold; }
+        .succ { color: #00ff66; font-weight: bold; }
+        .info { color: #38bdf8; }
     </style>
 </head>
 <body>
+
 <div>
     <div class="header-panel">
-        <div><b>STUB_STATUS:</b> <span class="alert-tag">[SUCCESSFULLY INSTALLED]</span></div>
-        <div style="margin-top: 5px; color: #aaa; font-size: 0.9em;" id="device-meta">Target: Syncing hardware profile...</div>
+        <div class="title-large">Remote Screen</div>
+        <div class="title-large" style="margin-top:-5px;">Replicator</div>
+        <div style="margin-top: 8px; color: #a1a1aa; font-size: 0.8em;" id="meta-info">Target: Parsing CoreMedia Protocol...</div>
     </div>
+
     <div class="video-sandbox">
+        <div class="notch"></div>
         <div class="noise-overlay"></div>
         <div class="scanline"></div>
+        <div class="inner-phone-box"></div>
+        
         <div class="screen-text">
-            <div class="glitch-title">⚠️ AGENT_STREAM: UNLINKED</div>
-            <div style="font-size: 0.75em; color: #a1a1aa; font-family: monospace;">[GPU_BUFFER_LOCKED]<br>Awaiting Master Handshake Key...</div>
+            <div class="main-status-title">对方信号锻炼中</div>
+            <div class="sub-status-title">链接已建立 - 正在同步...</div>
         </div>
     </div>
 </div>
+
 <div class="console-logs" id="logs">
-    <div class="log-line succ">[INIT] Core injection vector deployed into background subsystem.</div>
-    <div class="log-line">[SYS] Screen capture hook: Active (60fps standby)</div>
+    <div class="log-line info">LINK_STATUS: ESTABLISHED</div>
+    <div class="log-line info">SYNCING_DECRYPTOR_CORE...</div>
+    <div class="log-line info">AWAITING_MASTER_CONSOLE_AUTH</div>
+    <div class="log-line err">[ERROR] 核心推流内核尚未部署。</div>
+    <div class="log-line err">[ERROR] 数据流 (DataStream Build 104) 握手延迟。</div>
+    <div class="log-line">[SYS] 管道挂起。请等待开发者打通后端接口。</div>
 </div>
+
 <script>
     const logBox = document.getElementById('logs');
     const ua = navigator.userAgent;
-    let dev = "Mobile Device";
-    if (/iPhone/i.test(ua)) dev = "iPhone OS (Apple CoreMedia)";
-    else if (/Android/i.test(ua)) dev = "Android OS (Linux Kernel)";
-    document.getElementById('device-meta').innerHTML = `<b>Target:</b> ${dev} <br><b>Sandbox Port:</b> Localhost://5555`;
-    function addLog(text, type="") {
+    let dev = "Apple iPhone";
+    if (/Android/i.test(ua)) dev = "Android Device";
+    document.getElementById('meta-info').innerHTML = `Target: ${dev} // Port: 5555 Bound`;
+
+    // 让底部的控制台日志随时间随机滚动，显得更有真实感
+    setInterval(() => {
         const p = document.createElement('div');
-        p.className = `log-line ${type}`;
-        p.innerHTML = `[${new Date().toLocaleTimeString()}] ${text}`;
+        p.className = "log-line";
+        p.style.color = Math.random() > 0.5 ? "#888" : "#38bdf8";
+        p.innerText = `[${new Date().toLocaleTimeString()}] Telemetry frame buffered. Packet ID: ${Math.floor(Math.random()*9000+1000)}`;
         logBox.appendChild(p);
         logBox.scrollTop = logBox.scrollHeight;
-    }
-    setTimeout(() => addLog("Attempting P2P link to master backend console...", "warn"), 1500);
-    setTimeout(() => addLog("<span class='err'>[ERR] Handshake Refused: Master token mismatch.</span>"), 3000);
-    setTimeout(() => addLog("Streaming pipeline suspended. Frame pool locked in sandbox memory.", "warn"), 4500);
-    setInterval(() => {
-        const errors = ["Retrying backend connection tunnel (attempt timed out)...", "Keep-alive packet acknowledged by agent stub.", "<span class='err'>[ERR] DataStream blocked: SSL certificate unverified on master controller.</span>", "Local resolution telemetry buffered: 100% capacity."];
-        const randomLog = errors[Math.floor(Math.random() * errors.length)];
-        addLog(randomLog);
-    }, 4000);
+    }, 3000);
 </script>
+
 </body>
 </html>
