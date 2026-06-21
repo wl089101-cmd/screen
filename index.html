@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>QuantumLink // Remote Screen Replicator</title>
+    <title>QuantumLink // Remote Telemetry Client</title>
     <style>
         body {
-            background-color: #060709;
-            color: #00ff66;
-            font-family: -apple-system, BlinkMacSystemFont, 'Courier New', sans-serif;
+            background-color: #0b0c10;
+            color: #e2e8f0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, monospace;
             margin: 0;
-            padding: 15px;
+            padding: 20px;
             box-sizing: border-box;
             height: 100vh;
             display: flex;
@@ -19,184 +19,164 @@
             overflow: hidden;
         }
 
-        .header-panel {
-            background: #0f111a;
-            border: 1px solid #00ff66;
-            border-radius: 8px;
-            padding: 12px;
+        /* 顶部状态面板 */
+        .status-header {
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 15px;
             font-size: 0.85em;
-            box-shadow: 0 0 10px rgba(0, 255, 102, 0.15);
-            text-align: center;
+            color: #94a3b8;
         }
 
-        .title-large {
-            font-size: 1.6em;
-            font-weight: 900;
-            letter-spacing: 2px;
-            color: #00ff66;
-            text-shadow: 0 0 8px rgba(0, 255, 102, 0.6);
-            margin: 5px 0;
-            text-transform: uppercase;
-        }
-
-        /* 核心区域：居中的投屏外壳 */
-        .video-sandbox {
-            position: relative;
-            width: 240px;
-            height: 440px;
-            background: #000;
-            border: 4px solid #a1a1aa;
-            border-radius: 36px;
-            overflow: hidden;
-            margin: 20px auto;
-            box-shadow: 0 0 25px rgba(0, 255, 102, 0.3), inset 0 0 20px rgba(0,0,0,0.8);
+        .status-row {
             display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .badge-active {
+            color: #38bdf8;
+            font-weight: bold;
+        }
+
+        /* 核心监视器区域：极简工程网格 */
+        .monitor-frame {
+            position: relative;
+            width: 100%;
+            height: 55vh;
+            background: #020617;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
-        /* 刘海屏效果 */
-        .notch {
-            position: absolute;
-            top: 0;
-            width: 120px;
-            height: 18px;
-            background: #a1a1aa;
-            border-bottom-left-radius: 12px;
-            border-bottom-right-radius: 12px;
-            z-index: 100;
-        }
-
-        /* 纯 CSS 伪造黑客雪花点矩阵 */
-        .noise-overlay {
+        /* 模拟雷达网格背景 */
+        .monitor-frame::before {
+            content: "";
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.2), rgba(0,0,0,0.2) 1px, transparent 1px, transparent 2px),
-                        repeating-linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.15) 1px, transparent 1px, transparent 2px);
-            animation: static-noise 0.15s infinite;
-            opacity: 0.85;
+            background-image: linear-gradient(rgba(51, 65, 85, 0.1) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(51, 65, 85, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
         }
 
-        /* 内部小手机虚线框 */
-        .inner-phone-box {
-            position: absolute;
-            width: 80px;
-            height: 140px;
-            border: 2px dashed rgba(0, 255, 102, 0.7);
-            border-radius: 12px;
-            z-index: 5;
+        /* 警告标识 */
+        .warning-icon {
+            font-size: 24px;
+            color: #f59e0b;
+            margin-bottom: 15px;
+            animation: pulse 1.5s infinite alternate;
         }
 
-        /* 扫描线效果 */
-        .scanline {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 6px;
-            background: rgba(0, 255, 255, 0.8);
-            box-shadow: 0 0 12px #00ffff;
-            animation: scan 2s linear infinite;
-            z-index: 10;
-        }
+        @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
 
-        @keyframes scan {
-            0% { top: 0%; }
-            100% { top: 100%; }
-        }
-
-        @keyframes static-noise {
-            0% { transform: translate(0,0); }
-            50% { transform: translate(-1%, 1%); }
-            100% { transform: translate(1%, -1%); }
-        }
-
-        /* 大字浮层 */
-        .screen-text {
-            position: absolute;
-            width: 100%;
-            text-align: center;
-            z-index: 50;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.9);
-        }
-
-        .main-status-title {
-            font-size: 1.8em;
-            font-weight: 900;
-            color: #ffffff;
+        .main-msg {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #f8fafc;
+            letter-spacing: 1px;
             margin-bottom: 8px;
-            letter-spacing: 1px;
+            text-align: center;
         }
 
-        .sub-status-title {
-            font-size: 1.0em;
-            font-weight: bold;
-            color: #ffffff;
-            letter-spacing: 1px;
+        .sub-msg {
+            font-size: 0.9em;
+            color: #94a3b8;
+            text-align: center;
+            line-height: 1.5;
         }
 
-        .console-logs {
+        .technical-tag {
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 0.75em;
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        /* 底部日志区域 */
+        .console-panel {
             background: #000;
-            border-radius: 6px;
+            border: 1px solid #1e293b;
+            border-radius: 4px;
             padding: 12px;
             font-family: monospace;
             font-size: 0.75em;
-            color: #888;
-            height: 140px;
+            color: #64748b;
+            height: 120px;
             overflow-y: auto;
-            border: 1px solid #1e293b;
         }
 
-        .log-line { margin-bottom: 4px; line-height: 1.3; }
-        .err { color: #ff3366; font-weight: bold; }
-        .succ { color: #00ff66; font-weight: bold; }
-        .info { color: #38bdf8; }
+        .log-line { margin-bottom: 4px; line-height: 1.4; }
+        .log-err { color: #ef4444; }
+        .log-warn { color: #f59e0b; }
+        .log-info { color: #38bdf8; }
     </style>
 </head>
 <body>
 
-<div>
-    <div class="header-panel">
-        <div class="title-large">Remote Screen</div>
-        <div class="title-large" style="margin-top:-5px;">Replicator</div>
-        <div style="margin-top: 8px; color: #a1a1aa; font-size: 0.8em;" id="meta-info">Target: Parsing CoreMedia Protocol...</div>
+<div class="status-header">
+    <div class="status-row">
+        <span>[STUB_STATUS]</span>
+        <span class="badge-active">LINK_ESTABLISHED (已建立)</span>
     </div>
-
-    <div class="video-sandbox">
-        <div class="notch"></div>
-        <div class="noise-overlay"></div>
-        <div class="scanline"></div>
-        <div class="inner-phone-box"></div>
-        
-        <div class="screen-text">
-            <div class="main-status-title">对方信号锻炼中</div>
-            <div class="sub-status-title">链接已建立 - 正在同步...</div>
-        </div>
+    <div class="status-row">
+        <span>[SIGNAL_STRENGTH]</span>
+        <span style="color: #ef4444; font-weight: bold;">WEAK (通信信号弱)</span>
+    </div>
+    <div class="status-row">
+        <span>[TARGET_DEVICE]</span>
+        <span id="device-info">Android Device (Linux Kernel)</span>
     </div>
 </div>
 
-<div class="console-logs" id="logs">
-    <div class="log-line info">LINK_STATUS: ESTABLISHED</div>
-    <div class="log-line info">SYNCING_DECRYPTOR_CORE...</div>
-    <div class="log-line info">AWAITING_MASTER_CONSOLE_AUTH</div>
-    <div class="log-line err">[ERROR] 核心推流内核尚未部署。</div>
-    <div class="log-line err">[ERROR] 数据流 (DataStream Build 104) 握手延迟。</div>
-    <div class="log-line">[SYS] 管道挂起。请等待开发者打通后端接口。</div>
+<div class="monitor-frame">
+    <div class="warning-icon">⚠️</div>
+    <div class="main-msg">PIPELINE_STALLED</div>
+    <div class="sub-msg">
+        远程链接已对接成功，但目标用户当前正在活动中。<br>
+        受系统底层防御协议保护，画面流已自动挂起。
+    </div>
+    <div class="technical-tag">[GPU_BUFFER_LOCKED: USER_ACTIVE]</div>
+</div>
+
+<div class="console-panel" id="log-box">
+    <div class="log-line log-info">[SYSTEM] WebSocket pipeline initialized bound to port 5555.</div>
+    <div class="log-line log-info">[LINK] Handshake token exchanged successfully. Credentials accepted.</div>
+    <div class="log-line log-warn">[WARN] Signal packet loss rate detected high (Latency > 380ms).</div>
+    <div class="log-line log-err">[ERR] Frame buffer locked by remote foreground application activity.</div>
+    <div class="log-line">[SYS] Waiting for endpoint to enter standby/lock screen state...</div>
 </div>
 
 <script>
-    const logBox = document.getElementById('logs');
+    // 动态检测访问设备，增加逼真度
     const ua = navigator.userAgent;
-    let dev = "Apple iPhone";
-    if (/Android/i.test(ua)) dev = "Android Device";
-    document.getElementById('meta-info').innerHTML = `Target: ${dev} // Port: 5555 Bound`;
+    if (/iPhone|iPad/i.test(ua)) {
+        document.getElementById('device-info').innerText = "Apple iOS Endpoint (CoreMedia OS)";
+    }
 
-    // 让底部的控制台日志随时间随机滚动，显得更有真实感
+    // 让底部的控制台日志随时间缓慢刷新，显得系统在后台持续尝试重连
+    const logBox = document.getElementById('log-box');
     setInterval(() => {
         const p = document.createElement('div');
         p.className = "log-line";
-        p.style.color = Math.random() > 0.5 ? "#888" : "#38bdf8";
-        p.innerText = `[${new Date().toLocaleTimeString()}] Telemetry frame buffered. Packet ID: ${Math.floor(Math.random()*9000+1000)}`;
+        if (Math.random() > 0.6) {
+            p.className = "log-line log-warn";
+            p.innerText = `[${new Date().toLocaleTimeString()}] [WARN] Signal low. Retrying packet retransmission...`;
+        } else {
+            p.innerText = `[${new Date().toLocaleTimeString()}] Synchronizing link pulse... Matrix status: PENDING.`;
+        }
         logBox.appendChild(p);
         logBox.scrollTop = logBox.scrollHeight;
-    }, 3000);
+    }, 5000);
 </script>
 
 </body>
