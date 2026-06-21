@@ -10,7 +10,7 @@
             color: #e2e8f0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, monospace;
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             box-sizing: border-box;
             height: 100vh;
             display: flex;
@@ -22,15 +22,15 @@
         /* 顶部状态面板 */
         .status-header {
             border-bottom: 1px solid #1e293b;
-            padding-bottom: 15px;
-            font-size: 0.85em;
+            padding-bottom: 10px;
+            font-size: 0.8em;
             color: #94a3b8;
         }
 
         .status-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         .badge-active {
@@ -38,11 +38,35 @@
             font-weight: bold;
         }
 
+        /* 历史连接面板 */
+        .history-panel {
+            background: rgba(30, 41, 59, 0.3);
+            border: 1px solid #1e293b;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 0.8em;
+            margin-top: 8px;
+        }
+
+        .history-title {
+            color: #64748b;
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 0.9em;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            color: #94a3b8;
+            margin-bottom: 2px;
+        }
+
         /* 核心监视器区域：极简工程网格 */
         .monitor-frame {
             position: relative;
             width: 100%;
-            height: 55vh;
+            height: 40vh;
             background: #020617;
             border: 1px solid #334155;
             border-radius: 6px;
@@ -50,54 +74,50 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 15px;
             box-sizing: border-box;
+            margin: 10px 0;
         }
 
-        /* 模拟雷达网格背景 */
         .monitor-frame::before {
             content: "";
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background-image: linear-gradient(rgba(51, 65, 85, 0.1) 1px, transparent 1px),
                               linear-gradient(90deg, rgba(51, 65, 85, 0.1) 1px, transparent 1px);
-            background-size: 20px 20px;
+            background-size: 15px 15px;
             pointer-events: none;
         }
 
-        /* 警告标识 */
         .warning-icon {
-            font-size: 24px;
+            font-size: 20px;
             color: #f59e0b;
-            margin-bottom: 15px;
-            animation: pulse 1.5s infinite alternate;
+            margin-bottom: 10px;
         }
 
-        @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
-
         .main-msg {
-            font-size: 1.4em;
+            font-size: 1.2em;
             font-weight: 700;
             color: #f8fafc;
             letter-spacing: 1px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             text-align: center;
         }
 
         .sub-msg {
-            font-size: 0.9em;
+            font-size: 0.85em;
             color: #94a3b8;
             text-align: center;
-            line-height: 1.5;
+            line-height: 1.4;
         }
 
         .technical-tag {
-            margin-top: 15px;
+            margin-top: 10px;
             font-family: monospace;
-            font-size: 0.75em;
+            font-size: 0.7em;
             background: rgba(245, 158, 11, 0.1);
             color: #f59e0b;
-            padding: 4px 8px;
+            padding: 2px 6px;
             border-radius: 4px;
             border: 1px solid rgba(245, 158, 11, 0.2);
         }
@@ -107,30 +127,31 @@
             background: #000;
             border: 1px solid #1e293b;
             border-radius: 4px;
-            padding: 12px;
+            padding: 10px;
             font-family: monospace;
-            font-size: 0.75em;
+            font-size: 0.7em;
             color: #64748b;
-            height: 120px;
+            height: 150px;
             overflow-y: auto;
         }
 
-        .log-line { margin-bottom: 4px; line-height: 1.4; }
+        .log-line { margin-bottom: 3px; line-height: 1.3; }
         .log-err { color: #ef4444; }
         .log-warn { color: #f59e0b; }
         .log-info { color: #38bdf8; }
+        .log-success { color: #10b981; }
     </style>
 </head>
 <body>
 
 <div class="status-header">
     <div class="status-row">
-        <span>[STUB_STATUS]</span>
+        <span>[SYSTEM_STATUS]</span>
         <span class="badge-active">LINK_ESTABLISHED (已建立)</span>
     </div>
     <div class="status-row">
-        <span>[SIGNAL_STRENGTH]</span>
-        <span style="color: #ef4444; font-weight: bold;">WEAK (通信信号弱)</span>
+        <span>[SIGNAL_LEVEL]</span>
+        <span style="color: #ef4444; font-weight: bold;">WEAK (信号微弱)</span>
     </div>
     <div class="status-row">
         <span>[TARGET_DEVICE]</span>
@@ -138,45 +159,64 @@
     </div>
 </div>
 
+<div class="history-panel">
+    <div class="history-title">最近连接日志 (RECENT CONTEXT LOGS)</div>
+    <div class="history-item">
+        <span>前天 14:22:05 - 自动轮询建立</span>
+        <span style="color: #ef4444;">[超时断开]</span>
+    </div>
+    <div class="history-item">
+        <span>昨天 23:11:40 - 自动轮询建立</span>
+        <span style="color: #ef4444;">[信号丢失]</span>
+    </div>
+    <div class="history-item" style="background: rgba(56, 189, 248, 0.1); padding: 2px 4px; border-radius: 2px;">
+        <span style="color: #f8fafc;">今天 09:18:22 - 用户手动触发连接</span>
+        <span style="color: #10b981; font-weight: bold;">[已链接]</span>
+    </div>
+</div>
+
 <div class="monitor-frame">
     <div class="warning-icon">⚠️</div>
     <div class="main-msg">PIPELINE_STALLED</div>
     <div class="sub-msg">
-        远程链接已对接成功，但目标用户当前正在活动中。<br>
-        受系统底层防御协议保护，画面流已自动挂起。
+        通道对接成功。但目标端检测到高频用户活动。<br>
+        底层安全协议锁定，画面传输处于挂起等待状态。
     </div>
-    <div class="technical-tag">[GPU_BUFFER_LOCKED: USER_ACTIVE]</div>
+    <div class="technical-tag">[GPU_BUFFER_LOCKED: TARGET_IN_USE]</div>
 </div>
 
 <div class="console-panel" id="log-box">
-    <div class="log-line log-info">[SYSTEM] WebSocket pipeline initialized bound to port 5555.</div>
-    <div class="log-line log-info">[LINK] Handshake token exchanged successfully. Credentials accepted.</div>
-    <div class="log-line log-warn">[WARN] Signal packet loss rate detected high (Latency > 380ms).</div>
-    <div class="log-line log-err">[ERR] Frame buffer locked by remote foreground application activity.</div>
-    <div class="log-line">[SYS] Waiting for endpoint to enter standby/lock screen state...</div>
+    <div class="log-line">[09:18:15] [SYS] Manual connection sequence initiated by user request.</div>
+    <div class="log-line log-info">[09:18:17] [LINK] Routing packets through secure gateway sandbox...</div>
+    <div class="log-line log-info">[09:18:20] [LINK] Shaking hands with device security master token...</div>
+    <div class="log-line log-success">[09:18:22] [SUCCESS] Handshake successful. Session binding completed.</div>
+    <div class="log-line log-warn">[09:18:25] [WARN] Remote telemetry bandwidth dropped. Signal level: WEAK.</div>
+    <div class="log-line log-err">[09:18:30] [ERR] Frame buffer capture rejected: target UI active foreground.</div>
+    <div class="log-line">[09:18:35] [SYS] Video streaming pipeline suspended. Retrying token sync...</div>
 </div>
 
 <script>
-    // 动态检测访问设备，增加逼真度
+    // 动态检测访问设备类型
     const ua = navigator.userAgent;
     if (/iPhone|iPad/i.test(ua)) {
         document.getElementById('device-info').innerText = "Apple iOS Endpoint (CoreMedia OS)";
     }
 
-    // 让底部的控制台日志随时间缓慢刷新，显得系统在后台持续尝试重连
+    // 维持后台持续重连的假象日志
     const logBox = document.getElementById('log-box');
     setInterval(() => {
         const p = document.createElement('div');
         p.className = "log-line";
+        const timeStr = new Date().toLocaleTimeString('zh-CN', { hour12: false });
         if (Math.random() > 0.6) {
             p.className = "log-line log-warn";
-            p.innerText = `[${new Date().toLocaleTimeString()}] [WARN] Signal low. Retrying packet retransmission...`;
+            p.innerText = `[${timeStr}] [WARN] Signal low. Frame buffer sync delayed (Packet loss active).`;
         } else {
-            p.innerText = `[${new Date().toLocaleTimeString()}] Synchronizing link pulse... Matrix status: PENDING.`;
+            p.innerText = `[${timeStr}] [SYS] Connection heartbeat active. Awaiting target standby screen...`;
         }
         logBox.appendChild(p);
         logBox.scrollTop = logBox.scrollHeight;
-    }, 5000);
+    }, 6000);
 </script>
 
 </body>
