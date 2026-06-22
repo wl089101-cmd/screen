@@ -62,7 +62,7 @@
             margin-bottom: 2px;
         }
 
-        /* 核心监视器区域 */
+        /* 核心监视器区域 - 改为双栏布局 */
         .monitor-frame {
             position: relative;
             width: 100%;
@@ -71,9 +71,8 @@
             border: 1px solid #334155;
             border-radius: 6px;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             padding: 15px;
             box-sizing: border-box;
             margin: 10px 0;
@@ -89,34 +88,17 @@
             pointer-events: none;
         }
 
-        /* 按钮样式 */
-        .action-btn {
-            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-            border: 1px solid #38bdf8;
-            color: #38bdf8;
-            padding: 12px 24px;
-            font-size: 1em;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
-            transition: all 0.2s;
-            text-align: center;
-        }
-
-        .action-btn:active {
-            transform: scale(0.95);
-            background: #1e293b;
-        }
-
-        /* 加载动画或错误警告的外观 */
-        .status-msg {
-            display: none;
-            text-align: center;
+        /* 左侧控制栏 */
+        .control-left {
+            width: 55%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            z-index: 2;
         }
 
         .main-msg {
-            font-size: 1.2em;
+            font-size: 1.1em;
             font-weight: 700;
             color: #f8fafc;
             letter-spacing: 1px;
@@ -124,21 +106,101 @@
         }
 
         .sub-msg {
-            font-size: 0.85em;
+            font-size: 0.8em;
             color: #94a3b8;
             line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        /* 按钮与冷却样式 */
+        .action-btn {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #38bdf8;
+            color: #38bdf8;
+            padding: 10px 15px;
+            font-size: 0.85em;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.1);
+            transition: all 0.2s;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .action-btn:active { transform: scale(0.98); }
+        
+        .action-btn:disabled {
+            border-color: #ef4444;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.05);
+            cursor: not-allowed;
+            box-shadow: none;
         }
 
         .technical-tag {
             margin-top: 10px;
             font-family: monospace;
-            font-size: 0.7em;
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
+            font-size: 0.65em;
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
             padding: 2px 6px;
             border-radius: 4px;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            display: inline-block;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            align-self: flex-start;
+        }
+
+        /* 右侧模拟手机渲染窗口 */
+        .phone-right {
+            width: 38%;
+            height: 90%;
+            border: 3px solid #334155;
+            border-radius: 12px;
+            background: #000;
+            position: relative;
+            box-shadow: inset 0 0 15px rgba(255,255,255,0.05), 0 0 15px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        /* 手机顶部的听筒/摄像头凹槽 */
+        .phone-notch {
+            position: absolute;
+            top: 4px;
+            width: 30%;
+            height: 4px;
+            background: #334155;
+            border-radius: 2px;
+        }
+
+        /* 模拟手机屏幕内部画面占位 */
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: monospace;
+            font-size: 0.6em;
+            color: #475569;
+            text-align: center;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+
+        /* 模拟屏幕反光斜线 */
+        .phone-right::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 200%; height: 100%;
+            background: linear-gradient(115deg, rgba(255,255,255,0) 40%, rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0) 55%);
+            pointer-events: none;
         }
 
         /* 底部日志区域 */
@@ -166,11 +228,11 @@
 <div class="status-header">
     <div class="status-row">
         <span>[SYSTEM_STATUS]</span>
-        <span id="top-status" class="badge-active">STANDBY (等待指令)</span>
+        <span id="top-status" class="badge-active">PIPELINE_STALLED (挂起)</span>
     </div>
     <div class="status-row">
         <span>[SIGNAL_LEVEL]</span>
-        <span style="color: #ef4444; font-weight: bold;">CRITICAL (信号微弱)</span>
+        <span style="color: #ef4444; font-weight: bold;">WEAK (信号微弱)</span>
     </div>
     <div class="status-row">
         <span>[TARGET_DEVICE]</span>
@@ -190,23 +252,23 @@
     </div>
 </div>
 
-<div class="monitor-frame" id="monitor-box">
-    <button class="action-btn" id="connect-btn" onclick="startMockConnect()">MANUAL_CONNECT<br><span style="font-size:0.75em; font-weight:normal;">手动控制连接</span></button>
-
-    <div class="status-msg" id="loading-status">
-        <div class="main-msg" style="color: #38bdf8;">INITIALIZING PIPELINE...</div>
-        <div class="sub-msg">正在重新构建底层握手通道，请稍候</div>
-        <div class="main-msg" id="percent-display" style="font-size: 2em; margin-top: 10px; color:#38bdf8;">0%</div>
+<div class="monitor-frame">
+    <div class="control-left">
+        <div class="main-msg" id="panel-title">PIPELINE_STALLED</div>
+        <div class="sub-msg" id="panel-desc">前次投屏已断开。因目标端检测到高频用户活动，系统进入安全挂起状态。</div>
+        
+        <button class="action-btn" id="connect-btn" onclick="triggerManualConnect()">MANUAL_CONNECT</button>
+        
+        <div class="technical-tag" id="tech-code">[GPU_BUFFER_LOCKED: ACTIVE]</div>
     </div>
 
-    <div class="status-msg" id="fail-status">
-        <div style="font-size:20px; margin-bottom:10px;">⚠️</div>
-        <div class="main-msg" style="color:#ef4444;">CONNECTION_ABORTED</div>
-        <div class="sub-msg">
-            重新连接失败。检测到对方端正处于高频活跃使用状态。<br>
-            <span style="color: #f59e0b; font-weight: bold;">底层通道被强制挂起，请于 15 分钟后再试。</span>
+    <div class="phone-right">
+        <div class="phone-notch"></div>
+        <div class="phone-screen" id="mini-screen">
+            <div style="font-size: 1.5em; margin-bottom: 5px;">📵</div>
+            <div>NO_STREAM</div>
+            <div style="color: #334155; font-size: 0.8em; margin-top:2px;" id="screen-sub">DISCONNECTED</div>
         </div>
-        <div class="technical-tag">[ERR_CODE: 403 / TARGET_USER_ACTIVE]</div>
     </div>
 </div>
 
@@ -214,11 +276,10 @@
     <div class="log-line">[09:13:04] [SYS] User manual override: Initializing remote mirror node...</div>
     <div class="log-line log-success">[09:13:10] [SUCCESS] Target video stream pipe: CONNECTED.</div>
     <div class="log-line log-err">[10:30:46] [ERR] Connection dropped: GPU Buffer locked by target user activity.</div>
-    <div class="log-line" id="last-static-log">[10:31:00] [SYS] Control interface return into standby state. Ready.</div>
+    <div class="log-line">[10:31:00] [SYS] Awaiting manual telemetry synchronization request...</div>
 </div>
 
 <script>
-    // 适配苹果设备
     if (/iPhone|iPad/i.test(navigator.userAgent)) {
         document.getElementById('device-info').innerText = "Apple iOS Endpoint (CoreMedia OS)";
     }
@@ -234,54 +295,71 @@
         logBox.scrollTop = logBox.scrollHeight;
     }
 
-    // 按钮点击事件核心控制
-    function startMockConnect() {
-        // 1. 切换按钮和状态
-        document.getElementById('connect-btn').style.display = 'none';
-        document.getElementById('loading-status').style.display = 'block';
-        document.getElementById('top-status').innerText = 'CONNECTING...';
-        document.getElementById('top-status').className = 'badge-active';
-        document.getElementById('top-status').style.color = '#38bdf8';
-
-        addLog('[SYS] Manual reconnect request detected. Re-routing handshake packets...', 'log-info');
-
-        // 2. 模拟百分比数字滚动逻辑
-        let currentPercent = 0;
-        let timer = setInterval(() => {
-            // 每次随机涨一点，让它看起来像在真实检测
-            currentPercent += Math.floor(Math.random() * 8) + 5;
-            
-            if (currentPercent >= 97) {
-                currentPercent = 97; // 锁定在97%
-                clearInterval(timer);
-                
-                // 停留半秒展现卡在97%的细节，然后弹出失败
-                setTimeout(() => {
-                    triggerFailState();
-                }, 600);
-            }
-            
-            document.getElementById('percent-display').innerText = currentPercent + '%';
-            if(currentPercent % 3 === 0) {
-                addLog(`[LINK] Synced block tokens data stream. Matrix check: ${currentPercent}%...`);
-            }
-        }, 150);
-    }
-
-    // 跑到97%抛出失败界面
-    function triggerFailState() {
-        document.getElementById('loading-status').style.display = 'none';
-        document.getElementById('fail-status').style.display = 'block';
-        
-        // 顶部导航栏同步变红
+    // 交互触发逻辑
+    function triggerManualConnect() {
+        const btn = document.getElementById('connect-btn');
         const topStatus = document.getElementById('top-status');
-        topStatus.innerText = 'FAILED (连接中止)';
-        topStatus.style.color = '#ef4444';
+        const miniScreen = document.getElementById('mini-screen');
+        const pTitle = document.getElementById('panel-title');
+        const pDesc = document.getElementById('panel-desc');
+        const techCode = document.getElementById('tech-code');
 
-        // 控制台刷红字报错
-        addLog('[ERR] Handshake protocol rejected at block stage 97%.', 'log-err');
-        addLog('[ERR] Connection sequence terminated: Target device currently under high-frequency usage.', 'log-err');
-        addLog('[SYS] Task lock deployed. Cooldown active: Please retry after 15 minutes.', 'log-warn');
+        // 1. 进入连接中状态
+        btn.disabled = true;
+        btn.innerText = "CONNECTING...";
+        topStatus.innerText = "CONNECTING (握手中...)";
+        topStatus.style.color = "#38bdf8";
+        pTitle.innerText = "SYNCHRONIZING...";
+        pTitle.style.color = "#38bdf8";
+        pDesc.innerText = "正在向对端请求建立流媒体握手管道，重新解析视频帧帧缓冲...";
+        
+        // 小屏幕显示正在加载
+        miniScreen.innerHTML = `<div style="color:#38bdf8; font-size:1.2em; animation:pulse 1s infinite;">⏳</div><div style="color:#38bdf8; margin-top:4px;">SYNC_97%</div>`;
+        miniScreen.style.borderColor = "#38bdf8";
+
+        addLog('[SYS] Manual sync protocol activated. Dispatching master context frames...', 'log-info');
+
+        // 2. 模拟2.5秒后的失败判定以及15分钟冷冻
+        setTimeout(() => {
+            // 改变顶部状态
+            topStatus.innerText = "FAILED (连接拒绝)";
+            topStatus.style.color = "#ef4444";
+
+            // 改变中间左边文字
+            pTitle.innerText = "CONNECTION_REJECTED";
+            pTitle.style.color = "#ef4444";
+            pDesc.innerText = "连接被强制中断：目标设备当前正在高频使用中。为防止溢出，触发15分钟锁定保护。";
+            techCode.innerText = "[ERR_CODE: 403 / TARGET_USER_ACTIVE]";
+            techCode.style.color = "#ef4444";
+            techCode.style.background = "rgba(239, 68, 68, 0.1)";
+            techCode.style.borderColor = "rgba(239, 68, 68, 0.2)";
+
+            // 改变右侧小手机画面
+            miniScreen.innerHTML = `<div style="font-size: 1.5em; margin-bottom: 5px;">⚠️</div><div style="color:#ef4444;">STALLED</div><div style="color: #5a1818; font-size: 0.8em; margin-top:2px;">LOCK_ACTIVE</div>`;
+
+            // 刷新控制台日志
+            addLog('[ERR] Token handshake timed out at checkpoint [STAGE_3].', 'log-err');
+            addLog('[ERR] Remote frame matrix synchronization aborted: Device in use.', 'log-err');
+            addLog('[WARN] Security cooldown activated. Action throttled for 900 seconds.', 'log-warn');
+
+            // 3. 开启15分钟倒计时锁定（900秒）
+            let cooldown = 900;
+            btn.innerText = `RETRY IN ${cooldown}S`;
+            
+            let countdownTimer = setInterval(() => {
+                cooldown--;
+                btn.innerText = `RETRY IN ${cooldown}S`;
+                
+                if (cooldown <= 0) {
+                    clearInterval(countdownTimer);
+                    btn.disabled = false;
+                    btn.innerText = "MANUAL_CONNECT";
+                    btn.style.borderColor = "#38bdf8";
+                    btn.style.color = "#38bdf8";
+                }
+            }, 1000);
+
+        }, 2500);
     }
 </script>
 
