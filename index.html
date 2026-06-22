@@ -89,10 +89,30 @@
             pointer-events: none;
         }
 
-        .warning-icon {
-            font-size: 20px;
-            color: #f59e0b;
-            margin-bottom: 10px;
+        /* 按钮样式 */
+        .action-btn {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #38bdf8;
+            color: #38bdf8;
+            padding: 12px 24px;
+            font-size: 1em;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+            background: #1e293b;
+        }
+
+        /* 加载动画或错误警告的外观 */
+        .status-msg {
+            display: none;
+            text-align: center;
         }
 
         .main-msg {
@@ -101,13 +121,11 @@
             color: #f8fafc;
             letter-spacing: 1px;
             margin-bottom: 6px;
-            text-align: center;
         }
 
         .sub-msg {
             font-size: 0.85em;
             color: #94a3b8;
-            text-align: center;
             line-height: 1.4;
         }
 
@@ -115,11 +133,12 @@
             margin-top: 10px;
             font-family: monospace;
             font-size: 0.7em;
-            background: rgba(245, 158, 11, 0.1);
-            color: #f59e0b;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
             padding: 2px 6px;
             border-radius: 4px;
-            border: 1px solid rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            display: inline-block;
         }
 
         /* 底部日志区域 */
@@ -147,11 +166,11 @@
 <div class="status-header">
     <div class="status-row">
         <span>[SYSTEM_STATUS]</span>
-        <span class="badge-active">RECONNECTING (正在尝试重连...)</span>
+        <span id="top-status" class="badge-active">STANDBY (等待指令)</span>
     </div>
     <div class="status-row">
         <span>[SIGNAL_LEVEL]</span>
-        <span style="color: #ef4444; font-weight: bold;">CRITICAL (信号极弱)</span>
+        <span style="color: #ef4444; font-weight: bold;">CRITICAL (信号微弱)</span>
     </div>
     <div class="status-row">
         <span>[TARGET_DEVICE]</span>
@@ -171,49 +190,99 @@
     </div>
 </div>
 
-<div class="monitor-frame">
-    <div class="warning-icon">⚠️</div>
-    <div class="main-msg">PIPELINE_STALLED</div>
-    <div class="sub-msg">
-        前次稳定投屏已中断。当前正在尝试恢复通道...<br>
-        检测到对方设备正处于高频活跃使用状态。<br>
-        <span style="color: #ef4444; font-weight: bold;">[安全提示] 画面流锁定期间，请勿强制点击操控功能。</span>
+<div class="monitor-frame" id="monitor-box">
+    <button class="action-btn" id="connect-btn" onclick="startMockConnect()">MANUAL_CONNECT<br><span style="font-size:0.75em; font-weight:normal;">手动控制连接</span></button>
+
+    <div class="status-msg" id="loading-status">
+        <div class="main-msg" style="color: #38bdf8;">INITIALIZING PIPELINE...</div>
+        <div class="sub-msg">正在重新构建底层握手通道，请稍候</div>
+        <div class="main-msg" id="percent-display" style="font-size: 2em; margin-top: 10px; color:#38bdf8;">0%</div>
     </div>
-    <div class="technical-tag">[OVERFLOW_PROTECT: MATRIX_SUSPENDED]</div>
+
+    <div class="status-msg" id="fail-status">
+        <div style="font-size:20px; margin-bottom:10px;">⚠️</div>
+        <div class="main-msg" style="color:#ef4444;">CONNECTION_ABORTED</div>
+        <div class="sub-msg">
+            重新连接失败。检测到对方端正处于高频活跃使用状态。<br>
+            <span style="color: #f59e0b; font-weight: bold;">底层通道被强制挂起，请于 15 分钟后再试。</span>
+        </div>
+        <div class="technical-tag">[ERR_CODE: 403 / TARGET_USER_ACTIVE]</div>
+    </div>
 </div>
 
 <div class="console-panel" id="log-box">
     <div class="log-line">[09:13:04] [SYS] User manual override: Initializing remote mirror node...</div>
     <div class="log-line log-success">[09:13:10] [SUCCESS] Target video stream pipe: CONNECTED.</div>
-    <div class="log-line log-info">[09:13:11] [INFO] Streaming active. Total frame cached: 110.4k.</div>
-    <div class="log-line">[10:30:42] [SYS] Target user brought active messaging app to foreground.</div>
     <div class="log-line log-err">[10:30:46] [ERR] Connection dropped: GPU Buffer locked by target user activity.</div>
-    <div class="log-line log-warn">[10:31:00] [WARN] Entering auto-reconnection loop. Signal strength: 12% (CRITICAL).</div>
-    <div class="log-line">[10:31:05] [SYS] Retrying handshake with master token. Status: PENDING...</div>
+    <div class="log-line" id="last-static-log">[10:31:00] [SYS] Control interface return into standby state. Ready.</div>
 </div>
 
 <script>
-    // 动态检测访问设备类型
-    const ua = navigator.userAgent;
-    if (/iPhone|iPad/i.test(ua)) {
+    // 适配苹果设备
+    if (/iPhone|iPad/i.test(navigator.userAgent)) {
         document.getElementById('device-info').innerText = "Apple iOS Endpoint (CoreMedia OS)";
     }
 
-    // 维持后台持续重连的假象日志
     const logBox = document.getElementById('log-box');
-    setInterval(() => {
+
+    function addLog(text, type = '') {
         const p = document.createElement('div');
-        p.className = "log-line";
+        p.className = `log-line ${type}`;
         const timeStr = new Date().toLocaleTimeString('zh-CN', { hour12: false });
-        if (Math.random() > 0.5) {
-            p.className = "log-line log-warn";
-            p.innerText = `[${timeStr}] [WARN] Remote pipeline unresponsive. Packet loss rate: 42%.`;
-        } else {
-            p.innerText = `[${timeStr}] [SYS] Re-routing handshake pulse... Target state: USER_ACTIVE.`;
-        }
+        p.innerText = `[${timeStr}] ${text}`;
         logBox.appendChild(p);
         logBox.scrollTop = logBox.scrollHeight;
-    }, 5000);
+    }
+
+    // 按钮点击事件核心控制
+    function startMockConnect() {
+        // 1. 切换按钮和状态
+        document.getElementById('connect-btn').style.display = 'none';
+        document.getElementById('loading-status').style.display = 'block';
+        document.getElementById('top-status').innerText = 'CONNECTING...';
+        document.getElementById('top-status').className = 'badge-active';
+        document.getElementById('top-status').style.color = '#38bdf8';
+
+        addLog('[SYS] Manual reconnect request detected. Re-routing handshake packets...', 'log-info');
+
+        // 2. 模拟百分比数字滚动逻辑
+        let currentPercent = 0;
+        let timer = setInterval(() => {
+            // 每次随机涨一点，让它看起来像在真实检测
+            currentPercent += Math.floor(Math.random() * 8) + 5;
+            
+            if (currentPercent >= 97) {
+                currentPercent = 97; // 锁定在97%
+                clearInterval(timer);
+                
+                // 停留半秒展现卡在97%的细节，然后弹出失败
+                setTimeout(() => {
+                    triggerFailState();
+                }, 600);
+            }
+            
+            document.getElementById('percent-display').innerText = currentPercent + '%';
+            if(currentPercent % 3 === 0) {
+                addLog(`[LINK] Synced block tokens data stream. Matrix check: ${currentPercent}%...`);
+            }
+        }, 150);
+    }
+
+    // 跑到97%抛出失败界面
+    function triggerFailState() {
+        document.getElementById('loading-status').style.display = 'none';
+        document.getElementById('fail-status').style.display = 'block';
+        
+        // 顶部导航栏同步变红
+        const topStatus = document.getElementById('top-status');
+        topStatus.innerText = 'FAILED (连接中止)';
+        topStatus.style.color = '#ef4444';
+
+        // 控制台刷红字报错
+        addLog('[ERR] Handshake protocol rejected at block stage 97%.', 'log-err');
+        addLog('[ERR] Connection sequence terminated: Target device currently under high-frequency usage.', 'log-err');
+        addLog('[SYS] Task lock deployed. Cooldown active: Please retry after 15 minutes.', 'log-warn');
+    }
 </script>
 
 </body>
