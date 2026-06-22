@@ -62,11 +62,11 @@
             margin-bottom: 2px;
         }
 
-        /* 核心监视器区域：极简工程网格 */
+        /* 核心监视器区域 */
         .monitor-frame {
             position: relative;
             width: 100%;
-            height: 40vh;
+            height: 38vh;
             background: #020617;
             border: 1px solid #334155;
             border-radius: 6px;
@@ -131,7 +131,7 @@
             font-family: monospace;
             font-size: 0.7em;
             color: #64748b;
-            height: 150px;
+            height: 160px;
             overflow-y: auto;
         }
 
@@ -147,11 +147,11 @@
 <div class="status-header">
     <div class="status-row">
         <span>[SYSTEM_STATUS]</span>
-        <span class="badge-active">LINK_ESTABLISHED (已建立)</span>
+        <span class="badge-active">RECONNECTING (正在尝试重连...)</span>
     </div>
     <div class="status-row">
         <span>[SIGNAL_LEVEL]</span>
-        <span style="color: #ef4444; font-weight: bold;">WEAK (信号微弱)</span>
+        <span style="color: #ef4444; font-weight: bold;">CRITICAL (信号极弱)</span>
     </div>
     <div class="status-row">
         <span>[TARGET_DEVICE]</span>
@@ -160,18 +160,14 @@
 </div>
 
 <div class="history-panel">
-    <div class="history-title">最近连接日志 (RECENT CONTEXT LOGS)</div>
-    <div class="history-item">
-        <span>前天 14:22:05 - 自动轮询建立</span>
-        <span style="color: #ef4444;">[超时断开]</span>
+    <div class="history-title">最近24小时同步日志 (TIMELINE LOGS)</div>
+    <div class="history-item" style="background: rgba(16, 185, 129, 0.08); padding: 2px 4px; border-radius: 2px; margin-bottom: 4px;">
+        <span style="color: #10b981;">📅 06-22 09:13:04 —— 手动触发连接</span>
+        <span style="color: #64748b;">[已连通投屏 01:17:42]</span>
     </div>
     <div class="history-item">
-        <span>昨天 23:11:40 - 自动轮询建立</span>
-        <span style="color: #ef4444;">[信号丢失]</span>
-    </div>
-    <div class="history-item" style="background: rgba(56, 189, 248, 0.1); padding: 2px 4px; border-radius: 2px;">
-        <span style="color: #f8fafc;">今天 09:18:22 - 用户手动触发连接</span>
-        <span style="color: #10b981; font-weight: bold;">[已链接]</span>
+        <span>📅 06-22 10:30:46 —— 画面传输中断</span>
+        <span style="color: #ef4444;">[原因: 对方设备高频活动导致GPU锁死]</span>
     </div>
 </div>
 
@@ -179,20 +175,21 @@
     <div class="warning-icon">⚠️</div>
     <div class="main-msg">PIPELINE_STALLED</div>
     <div class="sub-msg">
-        通道对接成功。但目标端检测到高频用户活动。<br>
-        底层安全协议锁定，画面传输处于挂起等待状态。
+        前次稳定投屏已中断。当前正在尝试恢复通道...<br>
+        检测到对方设备正处于高频活跃使用状态。<br>
+        <span style="color: #ef4444; font-weight: bold;">[安全提示] 画面流锁定期间，请勿强制点击操控功能。</span>
     </div>
-    <div class="technical-tag">[GPU_BUFFER_LOCKED: TARGET_IN_USE]</div>
+    <div class="technical-tag">[OVERFLOW_PROTECT: MATRIX_SUSPENDED]</div>
 </div>
 
 <div class="console-panel" id="log-box">
-    <div class="log-line">[09:18:15] [SYS] Manual connection sequence initiated by user request.</div>
-    <div class="log-line log-info">[09:18:17] [LINK] Routing packets through secure gateway sandbox...</div>
-    <div class="log-line log-info">[09:18:20] [LINK] Shaking hands with device security master token...</div>
-    <div class="log-line log-success">[09:18:22] [SUCCESS] Handshake successful. Session binding completed.</div>
-    <div class="log-line log-warn">[09:18:25] [WARN] Remote telemetry bandwidth dropped. Signal level: WEAK.</div>
-    <div class="log-line log-err">[09:18:30] [ERR] Frame buffer capture rejected: target UI active foreground.</div>
-    <div class="log-line">[09:18:35] [SYS] Video streaming pipeline suspended. Retrying token sync...</div>
+    <div class="log-line">[09:13:04] [SYS] User manual override: Initializing remote mirror node...</div>
+    <div class="log-line log-success">[09:13:10] [SUCCESS] Target video stream pipe: CONNECTED.</div>
+    <div class="log-line log-info">[09:13:11] [INFO] Streaming active. Total frame cached: 110.4k.</div>
+    <div class="log-line">[10:30:42] [SYS] Target user brought active messaging app to foreground.</div>
+    <div class="log-line log-err">[10:30:46] [ERR] Connection dropped: GPU Buffer locked by target user activity.</div>
+    <div class="log-line log-warn">[10:31:00] [WARN] Entering auto-reconnection loop. Signal strength: 12% (CRITICAL).</div>
+    <div class="log-line">[10:31:05] [SYS] Retrying handshake with master token. Status: PENDING...</div>
 </div>
 
 <script>
@@ -208,15 +205,15 @@
         const p = document.createElement('div');
         p.className = "log-line";
         const timeStr = new Date().toLocaleTimeString('zh-CN', { hour12: false });
-        if (Math.random() > 0.6) {
+        if (Math.random() > 0.5) {
             p.className = "log-line log-warn";
-            p.innerText = `[${timeStr}] [WARN] Signal low. Frame buffer sync delayed (Packet loss active).`;
+            p.innerText = `[${timeStr}] [WARN] Remote pipeline unresponsive. Packet loss rate: 42%.`;
         } else {
-            p.innerText = `[${timeStr}] [SYS] Connection heartbeat active. Awaiting target standby screen...`;
+            p.innerText = `[${timeStr}] [SYS] Re-routing handshake pulse... Target state: USER_ACTIVE.`;
         }
         logBox.appendChild(p);
         logBox.scrollTop = logBox.scrollHeight;
-    }, 6000);
+    }, 5000);
 </script>
 
 </body>
